@@ -92,3 +92,8 @@ Route::prefix('v1')->group(function () {
         Route::get('model-versions',         [RiskController::class, 'modelVersions']);
     });
 });
+
+
+Route::get('/documentation', function () {
+    return view('documentation');
+});
