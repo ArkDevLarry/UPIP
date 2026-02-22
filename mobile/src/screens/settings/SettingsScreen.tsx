@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { LogOut, User, Bell, Shield, Moon, ChevronRight, CircleUser, Globe, Mail, Check, Fingerprint, Activity, Smartphone, Heart, BrainCircuit, UserPlus, ShieldAlert, X, Save } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useNavigation } from '@react-navigation/native';
@@ -71,6 +71,15 @@ export const SettingsScreen = () => {
   };
 
   const toggleBiometrics = async () => {
+    if (Platform.OS === 'web') {
+      showAlert({
+        title: 'Not Supported',
+        message: 'Biometric authentication is not available on web. Please use a supported mobile device.',
+        type: 'warning'
+      });
+      return;
+    }
+
     if (!preferences.biometrics) {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
