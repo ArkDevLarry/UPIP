@@ -110,6 +110,14 @@ export const DataSyncScreen = ({ navigation }: any) => {
   };
 
   const handlePickImage = async () => {
+    if (Platform.OS === 'web') {
+      showAlert({
+        title: 'Not Supported',
+        message: 'Uploading from the device gallery is not supported on web. Use the web uploader or a mobile device.',
+        type: 'warning'
+      });
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showAlert({
@@ -180,17 +188,17 @@ export const DataSyncScreen = ({ navigation }: any) => {
           setSyncProgress(i / 100);
           await new Promise(r => setTimeout(r, 100));
           
-          if (i === 50) {
-              // Send a mock observation
-              await endpoints.observations.postWearable({
-                  sub_type: 'heart_rate',
-                  value: 72,
-                  unit: 'bpm',
-                  observed_at: new Date().toISOString(),
-                  platform: Platform.OS === 'ios' ? 'ios' : 'android',
-                  health_api: Platform.OS === 'ios' ? 'HealthKit' : 'HealthConnect'
-              });
-          }
+        if (i === 50) {
+          // Send a mock observation
+          await endpoints.observations.postWearable({
+            sub_type: 'heart_rate',
+            value: 72,
+            unit: 'bpm',
+            observed_at: new Date().toISOString(),
+            platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web',
+            health_api: Platform.OS === 'ios' ? 'HealthKit' : Platform.OS === 'android' ? 'HealthConnect' : 'WebBridge'
+          });
+        }
       }
 
       setLastSync(new Date().toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }));
