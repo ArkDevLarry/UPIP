@@ -24,13 +24,13 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('register',       [AuthController::class, 'register']);
         Route::post('login',          [AuthController::class, 'login'])->name('login');
-        Route::post('refresh',        [AuthController::class, 'refresh'])->middleware('auth:api');
-        Route::post('logout',         [AuthController::class, 'logout'])->middleware('auth:api');
-        Route::get('me',              [AuthController::class, 'me'])->middleware('auth:api');
+        Route::post('refresh',        [AuthController::class, 'refresh'])->middleware('auth:sanctum');
+        Route::post('logout',         [AuthController::class, 'logout'])->middleware('auth:sanctum');
+        Route::get('me',              [AuthController::class, 'me'])->middleware('auth:sanctum');
     });
 
     // ─── Authenticated Routes ─────────────────────────────────────────────
-    Route::middleware(['auth:api', 'consent.check', 'audit.log'])->group(function () {
+    Route::middleware(['auth:sanctum', 'consent.check', 'audit.log'])->group(function () {
 
         // Observations ingestion
         Route::prefix('observations')->group(function () {
@@ -76,7 +76,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ─── Clinician Routes ─────────────────────────────────────────────────
-    Route::middleware(['auth:api', 'role:clinician|admin', 'audit.log'])->prefix('clinician')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:clinician|admin', 'audit.log'])->prefix('clinician')->group(function () {
         Route::get('queue',                       [ClinicianController::class, 'queue']);
         Route::get('cases/{caseId}',              [ClinicianController::class, 'show']);
         Route::post('review/{caseId}',            [ClinicianController::class, 'submitReview']);
@@ -85,7 +85,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // ─── Admin Routes ─────────────────────────────────────────────────────
-    Route::middleware(['auth:api', 'role:admin', 'audit.log'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:admin', 'audit.log'])->prefix('admin')->group(function () {
         Route::get('audit-logs',             [AuditController::class, 'adminIndex']);
         Route::get('risk-weights',           [RiskController::class, 'getWeights']);
         Route::put('risk-weights',           [RiskController::class, 'updateWeights']);
