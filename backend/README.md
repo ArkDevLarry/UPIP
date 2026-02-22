@@ -246,8 +246,10 @@ Monitoring (Prometheus + Grafana)
 👨🏽‍💻 Author
 
 Quadri Akerele
-Computer Science
-Backend & Distributed Systems Developer
+Adeniji odunola
+Adigun fatai
+Alarape Micheal
+Nelson Ayomide
 
 📄 License
 
