@@ -8,8 +8,9 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Services\Consent\ConsentService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
@@ -23,52 +24,53 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'dob'      => $request->dob,
             'gender'   => $request->gender,
-            'region'   => $request->region ?? 'NG',
+            'region'   => $request->region ?? 'AF',
         ]);
 
         $user->assignRole('patient');
 
-        // Create Sanctum token
-        $token = $user->createToken('mobile-token')->plainTextToken;
+        $token = JWTAuth::fromUser($user);
 
         return $this->respondWithToken($token, $user, 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid credentials.'
-            ], 401);
+        $credentials = $request->only('email', 'password');
+
+        try {
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return response()->json(['message' => 'Invalid credentials.'], 401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Could not create token.'], 500);
         }
 
-        $user = Auth::user();
+        return $this->respondWithToken($token, auth()->user());
+    }
 
-        // Revoke previous tokens (optional but recommended for mobile)
-        $user->tokens()->delete();
-
-        $token = $user->createToken('mobile-token')->plainTextToken;
-
-        return $this->respondWithToken($token, $user);
+    public function refresh(): JsonResponse
+    {
+        try {
+            $token = JWTAuth::refresh(JWTAuth::getToken());
+            return $this->respondWithToken($token, auth()->user());
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Token refresh failed.'], 401);
+        }
     }
 
     public function logout(): JsonResponse
     {
-        auth()->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'Successfully logged out.'
-        ]);
+        JWTAuth::invalidate(JWTAuth::getToken());
+        return response()->json(['message' => 'Successfully logged out.']);
     }
 
     public function me(): JsonResponse
     {
         $user = auth()->user()->load('roles');
-
         return response()->json([
-            'user'            => $user,
-            'active_consents' => $this->consentService->getActiveModules($user->id),
-            'is_diagnostic'   => false,
+            'user'             => $user,
+            'active_consents'  => $this->consentService->getActiveModules($user->id),
         ]);
     }
 
@@ -76,7 +78,8 @@ class AuthController extends Controller
     {
         return response()->json([
             'access_token' => $token,
-            'token_type'   => 'Bearer',
+            'token_type'   => 'bearer',
+            'expires_in'   => config('jwt.ttl') * 60,
             'user'         => [
                 'id'    => $user->id,
                 'name'  => $user->name,

@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         // ─── Roles ────────────────────────────────────────────────────────
         $roles = ['patient', 'clinician', 'admin'];
         foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role]);
+            Role::firstOrCreate(['name' => $role, 'guard_name' => 'api']);
         }
 
         // ─── Admin user ───────────────────────────────────────────────────
